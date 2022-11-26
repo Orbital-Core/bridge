@@ -16,7 +16,7 @@ contract Bridge is OwnableUpgradeable {
     uint8 totalValidators;
     
     /// @notice This mapping tells us if an sidechain account is a validator or not
-    mapping(address => bool) validators;
+    mapping(address => bool) public validators;
 
     /// @notice Tracks which validator has signed the transaction
     mapping (address => mapping(uint => mapping(address => bool))) validatorSigned;

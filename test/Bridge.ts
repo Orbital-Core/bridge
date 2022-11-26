@@ -2,6 +2,7 @@ import { time, loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { Token, Bridge } from "../typechain-types";
+import { toUtf8Bytes } from "@ethersproject/strings";
 
 describe("Bridge", function () {
   async function deploy() {
@@ -41,20 +42,15 @@ describe("Bridge", function () {
       const txnType = 0;
       const amount = 0;
 
-      const hash = await bridge.getMessageHash(
+      const message = await bridge.getMessageHash(
         newValidator.address,
         nonce,
         txnType,
         amount
       )
 
-      const hashForSignature = await bridge.getEthSignedMessageHash(
-        hash
-      )
-
-      console.log(hashForSignature)
-
-      const signature = await currentValidator.signMessage(hashForSignature)
+      const messageHashBinary = ethers.utils.arrayify(message);
+      const signature = await currentValidator.signMessage(messageHashBinary)
 
       await bridge.processTransaction(
         newValidator.address,
@@ -65,6 +61,8 @@ describe("Bridge", function () {
           signature
         ]
       )
+
+      expect(await bridge.validators(newValidator.address)).to.be.equal(true)
     })
   });
 });
