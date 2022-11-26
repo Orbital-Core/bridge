@@ -2,7 +2,7 @@ import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { Token, Bridge } from "../typechain-types";
-import { Signer } from "ethers";
+import { BigNumber, Signer } from "ethers";
 
 describe("Bridge", function () {
   async function deploy() {
@@ -25,7 +25,7 @@ describe("Bridge", function () {
       account: string,
       nonce: number,
       txnType: number,
-      amount: number,
+      amount: number | BigNumber,
       signer: Signer
     ) => {
       const message = await bridge.getMessageHash(
@@ -43,15 +43,6 @@ describe("Bridge", function () {
       ({ token, bridge } = await loadFixture(deploy));
       token.mint(ethers.utils.parseUnits("100","ether"))
     })
-
-    it("deposit tokens", async function () {
-      await token.approve(bridge.address, ethers.utils.parseUnits("100","ether"));
-      await bridge.deposit(ethers.utils.parseUnits("100","ether"), "external-account");
-
-      expect(await token.balanceOf(bridge.address)).to.be.equal(ethers.utils.parseUnits("100","ether"))
-
-      await expect(bridge.deposit(ethers.utils.parseUnits("0.1","ether"), "external-account")).to.be.reverted
-    });
 
     it("add/remove validator", async function () {
       const [currentValidator, newValidator] = await ethers.getSigners();
@@ -90,5 +81,32 @@ describe("Bridge", function () {
       expect(await bridge.validators(newValidator.address)).to.be.equal(false)
       expect(await bridge.totalValidators()).to.be.equal(1)
     })
+
+    it("deposit/withdraw tokens", async function () {
+      await token.approve(bridge.address, ethers.utils.parseUnits("100","ether"));
+      await bridge.deposit(ethers.utils.parseUnits("100","ether"), "external-account");
+
+      expect(await token.balanceOf(bridge.address)).to.be.equal(ethers.utils.parseUnits("100","ether"))
+
+      await expect(bridge.deposit(ethers.utils.parseUnits("0.1","ether"), "external-account")).to.be.reverted
+      
+      const [currentValidator] = await ethers.getSigners();
+      let nonce = 0;
+      let txnType = 2;
+      const amount = ethers.utils.parseUnits("100","ether");
+
+      await bridge.processTransaction(
+        currentValidator.address,
+        nonce,
+        txnType,
+        amount,
+        [
+          await getSignature(currentValidator.address, nonce, txnType, amount, currentValidator)
+        ]
+      )
+
+      expect(await token.balanceOf(bridge.address)).to.be.equal(ethers.utils.parseUnits("0","ether"))
+      expect(await token.balanceOf(currentValidator.address)).to.be.equal(amount)
+    });
   });
 });
