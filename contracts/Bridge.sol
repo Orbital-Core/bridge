@@ -13,7 +13,7 @@ contract Bridge is OwnableUpgradeable {
     mapping (address => uint256) nextNonce;
 
     /// @notice This variable store the total validators in the sidechain
-    uint8 totalValidators;
+    uint8 public totalValidators;
     
     /// @notice This mapping tells us if an sidechain account is a validator or not
     mapping(address => bool) public validators;
