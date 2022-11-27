@@ -61,7 +61,7 @@ contract Bridge is OwnableUpgradeable {
         TransactionType txnType,
         uint amount
     ) public view returns (bytes32) {
-        return keccak256(abi.encodePacked(account, nonce, txnType, amount));
+        return keccak256(abi.encodePacked(account, nonce, txnType, amount, getChainID()));
     }
 
     function getEthSignedMessageHash(bytes32 _messageHash)
@@ -140,5 +140,13 @@ contract Bridge is OwnableUpgradeable {
         }
 
         emit TransactionProcessed(account, nonce, txnType, amount);
+    }
+
+    function getChainID() internal view returns (uint256) {
+        uint256 id;
+        assembly {
+            id := chainid()
+        }
+        return id;
     }
 }
