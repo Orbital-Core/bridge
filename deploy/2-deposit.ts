@@ -11,11 +11,13 @@ module.exports = async ({getNamedAccounts, deployments} : HardhatRuntimeEnvironm
   const depositAmount = ethers.utils.parseEther('10')
   const orbitalAccount = "0xfDe303527ed17ee0647b8A3f89A1692E60FDF22f";
  
-  await token.approve(bridge.address, depositAmount);
-  const tx = await bridge.deposit(depositAmount, orbitalAccount);
+  let tx = await token.approve(bridge.address, depositAmount);
+  await tx.wait(1);
+
+  tx = await bridge.deposit(depositAmount, orbitalAccount);
+  await tx.wait(1);
 
   console.log(tx)
-
 }
 
 module.exports.tags = ['deposit'];
