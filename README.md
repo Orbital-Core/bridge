@@ -1,13 +1,20 @@
-# Sample Hardhat Project
+# Orbital Bridge
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
-
-Try running some of the following tasks:
+## Run Tests
 
 ```shell
-npx hardhat help
 npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat run scripts/deploy.ts
+```
+
+## Deploy to Testnet
+
+```
+PRIVATE_KEY= RPC_URL= npx hardhat run --network sepolia scripts/1-deploy.ts
+```
+
+## Addresses
+
+```
+Bridge deployed to: 0xA4B86B05BAB99961328C21f7173Ced5de24Cb03d
+EPIC token deployed to: 0x370cfd4c7832Eb52E7eBE2182F12A3eEB43CEa34
 ```
