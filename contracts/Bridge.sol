@@ -22,7 +22,7 @@ contract Bridge is OwnableUpgradeable {
     event Deposited (
         address user,
         uint256 amount,
-        string account
+        address account
     );
 
     event TransactionProcessed (
@@ -47,7 +47,7 @@ contract Bridge is OwnableUpgradeable {
     }
 
     function deposit(
-        uint256 amount, string memory account
+        uint256 amount, address account
     ) external {
         bridgeToken.transferFrom(msg.sender, address(this), amount);
         emit Deposited(msg.sender, amount, account);

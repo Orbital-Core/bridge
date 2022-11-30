@@ -84,11 +84,13 @@ describe("Bridge", function () {
 
     it("deposit/withdraw tokens", async function () {
       await token.approve(bridge.address, ethers.utils.parseUnits("100","ether"));
-      await bridge.deposit(ethers.utils.parseUnits("100","ether"), "external-account");
+
+      const externalOrbitalAccount = "0xaFcCFEcE5baa296d9c06e0AB569E3d81df3d24fE";
+      await bridge.deposit(ethers.utils.parseUnits("100","ether"), externalOrbitalAccount);
 
       expect(await token.balanceOf(bridge.address)).to.be.equal(ethers.utils.parseUnits("100","ether"))
 
-      await expect(bridge.deposit(ethers.utils.parseUnits("0.1","ether"), "external-account")).to.be.reverted
+      await expect(bridge.deposit(ethers.utils.parseUnits("0.1","ether"), externalOrbitalAccount)).to.be.reverted
       
       const [currentValidator] = await ethers.getSigners();
       let nonce = 0;
