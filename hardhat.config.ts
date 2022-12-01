@@ -30,6 +30,12 @@ const config: HardhatUserConfig = {
       accounts: [process.env.PRIVATE_KEY || ""],
       chainId: 11155111,
       url: process.env.RPC_URL || "",
+      verify: {
+        etherscan: {
+          apiUrl: 'https://api-sepolia.etherscan.io/',
+          apiKey: process.env.API_KEY || ""
+        }
+      }
     }
   }
 };

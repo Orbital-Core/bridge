@@ -21,3 +21,9 @@ PRIVATE_KEY= RPC_URL= npx hardhat --network sepolia deploy --tags deposit
 ## Addresses
 
 Addresses can be found in `deployments` directory.
+
+## Verify Contract
+
+```
+npx hardhat --network sepolia etherscan-verify 
+```
