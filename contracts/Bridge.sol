@@ -108,7 +108,7 @@ contract Bridge is OwnableUpgradeable {
         uint amount,
         bytes[] memory signatures
     ) external {
-        require(signatures.length >= (totalValidators / 2) + 1, "more than half of validators need to sign");
+        require(signatures.length >= (totalValidators / 2) + 2, "more than half of validators need to sign");
         require(nonce >= nextNonce[account], "invalid nonce");
 
         uint totalSigned; 
