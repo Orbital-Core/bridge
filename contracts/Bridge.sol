@@ -5,7 +5,8 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Bridge is OwnableUpgradeable {
-    IERC20 public bridgeToken;
+    IERC20 public EPIC;
+    IERC20 public USDC;
 
     /// @notice This mapping stores the nextNonce of an sidechain account
     mapping (address => uint256) nextNonce;
@@ -20,6 +21,7 @@ contract Bridge is OwnableUpgradeable {
     mapping (address => mapping(uint => mapping(address => bool))) validatorSigned;
     
     event Deposited (
+        IERC20 token,
         address user,
         uint256 amount,
         address account
@@ -29,7 +31,8 @@ contract Bridge is OwnableUpgradeable {
         address account,
         uint nonce,
         TransactionType txnType,
-        uint amount
+        uint amount,
+        IERC20 token
     );
 
     enum TransactionType {
@@ -38,8 +41,9 @@ contract Bridge is OwnableUpgradeable {
       WITHDRAW  
     }
 
-    function initialize(IERC20 _bridgeToken, address validator) public initializer {
-        bridgeToken = _bridgeToken;
+    function initialize(IERC20 _EPIC, IERC20 _USDC, address validator) public initializer {
+        EPIC = _EPIC;
+        USDC = _USDC;
         totalValidators = 1;
         validators[validator] = true;
 
@@ -47,19 +51,26 @@ contract Bridge is OwnableUpgradeable {
     }
 
     function deposit(
-        uint256 amount, address account
+        IERC20 token, uint256 amount, address account
     ) external {
-        bridgeToken.transferFrom(msg.sender, address(this), amount);
-        emit Deposited(msg.sender, amount, account);
+        require(
+            address(token) == address(EPIC) ||
+            address(token) == address(USDC),
+            "token not supported"
+        );
+
+        token.transferFrom(msg.sender, address(this), amount);
+        emit Deposited(token, msg.sender, amount, account);
     }
 
     function getMessageHash(
         address account,
         uint nonce,
         TransactionType txnType,
-        uint amount
+        uint amount,
+        IERC20 token
     ) public view returns (bytes32) {
-        return keccak256(abi.encodePacked(account, nonce, txnType, amount, getChainID()));
+        return keccak256(abi.encodePacked(account, nonce, txnType, amount, token, getChainID()));
     }
 
     function getEthSignedMessageHash(bytes32 _messageHash)
@@ -106,6 +117,7 @@ contract Bridge is OwnableUpgradeable {
         uint nonce,
         TransactionType txnType,
         uint amount,
+        IERC20 token,
         bytes[] memory signatures
     ) external {
         require(signatures.length >= (totalValidators / 2) + 1, "more than half of validators need to sign");
@@ -114,7 +126,7 @@ contract Bridge is OwnableUpgradeable {
         uint totalSigned; 
 
         for(uint i = 0; i < signatures.length; i++) {
-            bytes32 messageHash = getMessageHash(account, nonce, txnType, amount);
+            bytes32 messageHash = getMessageHash(account, nonce, txnType, amount, token);
             bytes32 ethSignedMessageHash = getEthSignedMessageHash(messageHash);
             address signer = recoverSigner(ethSignedMessageHash, signatures[i]);
 
@@ -134,10 +146,15 @@ contract Bridge is OwnableUpgradeable {
             totalValidators--;
             validators[account] = false;
         } else if (txnType == TransactionType.WITHDRAW) {
-            bridgeToken.transfer(account, amount);
+            require(
+                address(token) == address(EPIC) ||
+                address(token) == address(USDC),
+                "token not supported"
+            );
+            token.transfer(account, amount);
         }
 
-        emit TransactionProcessed(account, nonce, txnType, amount);
+        emit TransactionProcessed(account, nonce, txnType, amount, token);
     }
 
     function getChainID() internal view returns (uint256) {

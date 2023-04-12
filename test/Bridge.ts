@@ -9,30 +9,33 @@ describe("Bridge", function () {
     const [owner] = await ethers.getSigners();
 
     const _Token = await ethers.getContractFactory("Token");
-    const token:Token = await _Token.deploy("Test Token", "TST");
+    const epic:Token = await _Token.deploy("EPIC Token", "EPIC");
+    const usdc:Token = await _Token.deploy("USDC Token", "USDC");
 
     const _Bridge = await ethers.getContractFactory("Bridge");
     const bridge:Bridge = await _Bridge.deploy();
-    await bridge.initialize(token.address, owner.address);
+    await bridge.initialize(epic.address, usdc.address, owner.address);
 
-    return { bridge, token };
+    return { bridge, epic, usdc };
   }
 
   describe("Operations", function () {
-    let token:Token, bridge:Bridge;
+    let usdc:Token, epic:Token, bridge:Bridge;
 
     const getSignature = async (
       account: string,
       nonce: number,
       txnType: number,
       amount: number | BigNumber,
+      token: string,
       signer: Signer
     ) => {
       const message = await bridge.getMessageHash(
         account,
         nonce,
         txnType,
-        amount
+        amount,
+        token
       )
 
       const messageHashBinary = ethers.utils.arrayify(message);
@@ -40,8 +43,9 @@ describe("Bridge", function () {
     }
 
     beforeEach(async () => {
-      ({ token, bridge } = await loadFixture(deploy));
-      token.mint(ethers.utils.parseUnits("100","ether"))
+      ({ epic, usdc, bridge } = await loadFixture(deploy));
+      epic.mint(ethers.utils.parseUnits("100","ether"))
+      usdc.mint(ethers.utils.parseUnits("100","ether"))
     })
 
     it("add/remove validator", async function () {
@@ -56,8 +60,9 @@ describe("Bridge", function () {
         nonce,
         txnType,
         amount,
+        ethers.constants.AddressZero,
         [
-          await getSignature(newValidator.address, nonce, txnType, amount, currentValidator)
+          await getSignature(newValidator.address, nonce, txnType, amount, ethers.constants.AddressZero, currentValidator)
         ]
       )
 
@@ -72,9 +77,10 @@ describe("Bridge", function () {
         nonce,
         txnType,
         amount,
+        ethers.constants.AddressZero,
         [
-          await getSignature(newValidator.address, nonce, txnType, amount, currentValidator),
-          await getSignature(newValidator.address, nonce, txnType, amount, newValidator)
+          await getSignature(newValidator.address, nonce, txnType, amount, ethers.constants.AddressZero, currentValidator),
+          await getSignature(newValidator.address, nonce, txnType, amount, ethers.constants.AddressZero, newValidator)
         ]
       )
 
@@ -83,14 +89,14 @@ describe("Bridge", function () {
     })
 
     it("deposit/withdraw tokens", async function () {
-      await token.approve(bridge.address, ethers.utils.parseUnits("100","ether"));
+      await epic.approve(bridge.address, ethers.utils.parseUnits("100","ether"));
 
       const externalOrbitalAccount = "0xaFcCFEcE5baa296d9c06e0AB569E3d81df3d24fE";
-      await bridge.deposit(ethers.utils.parseUnits("100","ether"), externalOrbitalAccount);
+      await bridge.deposit(epic.address, ethers.utils.parseUnits("100","ether"), externalOrbitalAccount);
 
-      expect(await token.balanceOf(bridge.address)).to.be.equal(ethers.utils.parseUnits("100","ether"))
+      expect(await epic.balanceOf(bridge.address)).to.be.equal(ethers.utils.parseUnits("100","ether"))
 
-      await expect(bridge.deposit(ethers.utils.parseUnits("0.1","ether"), externalOrbitalAccount)).to.be.reverted
+      await expect(bridge.deposit(epic.address, ethers.utils.parseUnits("0.1","ether"), externalOrbitalAccount)).to.be.reverted
       
       const [currentValidator] = await ethers.getSigners();
       let nonce = 0;
@@ -102,13 +108,14 @@ describe("Bridge", function () {
         nonce,
         txnType,
         amount,
+        epic.address,
         [
-          await getSignature(currentValidator.address, nonce, txnType, amount, currentValidator)
+          await getSignature(currentValidator.address, nonce, txnType, amount, epic.address, currentValidator)
         ]
       )
 
-      expect(await token.balanceOf(bridge.address)).to.be.equal(ethers.utils.parseUnits("0","ether"))
-      expect(await token.balanceOf(currentValidator.address)).to.be.equal(amount)
+      expect(await epic.balanceOf(bridge.address)).to.be.equal(ethers.utils.parseUnits("0","ether"))
+      expect(await epic.balanceOf(currentValidator.address)).to.be.equal(amount)
     });
   });
 });
