@@ -1,5 +1,4 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/dist/types";
 import hre from "hardhat";
 import { ethers } from "hardhat";
 
@@ -7,14 +6,24 @@ module.exports = async ({getNamedAccounts, deployments} : HardhatRuntimeEnvironm
   const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
 
-    await deploy('Token', {
+    await deploy('EPIC', {
+      contract: "Token",
       from : deployer,
       args: [
         "Orbital", "EPIC"
       ]
     });
 
-    const token = await hre.ethers.getContract("Token");
+    await deploy('USDC', {
+      contract: "Token",
+      from : deployer,
+      args: [
+        "USD Coin", "USDC"
+      ]
+    });
+
+    const usdc = await hre.ethers.getContract("USDC");
+    const epic = await hre.ethers.getContract("EPIC");
 
     await deploy("Bridge", {
       contract: "Bridge",
@@ -26,7 +35,8 @@ module.exports = async ({getNamedAccounts, deployments} : HardhatRuntimeEnvironm
         execute: {
           methodName: "initialize",
           args: [
-            token.address,
+            epic.address,
+            usdc.address,
             deployer
           ],
         },
@@ -34,14 +44,17 @@ module.exports = async ({getNamedAccounts, deployments} : HardhatRuntimeEnvironm
     });
 
     const mintAmount = ethers.utils.parseEther('10000000')
-    const tx = await token.mint(mintAmount) //10 million
+    let tx = await epic.mint(mintAmount, deployer) //10 million
     tx.wait(1);
-    console.log(tx)
+
+    tx = await usdc.mint(mintAmount, deployer) //10 million
+    tx.wait(1);
 
     const bridge = await hre.ethers.getContract("Bridge");
 
     console.log("Bridge deployed to:", bridge.address);
-    console.log("EPIC token deployed to:", token.address);
+    console.log("EPIC token deployed to:", epic.address);
+    console.log("USDC token deployed to:", usdc.address);
 }
 
 module.exports.tags = ['deploy'];
