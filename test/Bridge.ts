@@ -44,8 +44,9 @@ describe("Bridge", function () {
 
     beforeEach(async () => {
       ({ epic, usdc, bridge } = await loadFixture(deploy));
-      epic.mint(ethers.utils.parseUnits("100","ether"))
-      usdc.mint(ethers.utils.parseUnits("100","ether"))
+      const [owner] = await ethers.getSigners();
+      epic.mint(ethers.utils.parseUnits("100","ether"), owner.address)
+      usdc.mint(ethers.utils.parseUnits("100","ether"), owner.address)
     })
 
     it("add/remove validator", async function () {

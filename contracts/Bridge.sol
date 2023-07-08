@@ -8,8 +8,8 @@ contract Bridge is OwnableUpgradeable {
     IERC20 public EPIC;
     IERC20 public USDC;
 
-    /// @notice This mapping stores the nextNonce of an sidechain account
-    mapping (address => uint256) nextNonce;
+    /// @notice This mapping tracks if a nonce is used in sidechain for an account
+    mapping (address => mapping (uint256 => bool)) isNonceProcessed;
 
     /// @notice This variable store the total validators in the sidechain
     uint8 public totalValidators;
@@ -19,12 +19,16 @@ contract Bridge is OwnableUpgradeable {
 
     /// @notice Tracks which validator has signed the transaction
     mapping (address => mapping(uint => mapping(address => bool))) validatorSigned;
+
+    /// @notice unique ID assigned to each deposit
+    uint256 public depositId;
     
     event Deposited (
         IERC20 token,
         address user,
         uint256 amount,
-        address account
+        address account,
+        uint256 depositId
     );
 
     event TransactionProcessed (
@@ -60,7 +64,8 @@ contract Bridge is OwnableUpgradeable {
         );
 
         token.transferFrom(msg.sender, address(this), amount);
-        emit Deposited(token, msg.sender, amount, account);
+        emit Deposited(token, msg.sender, amount, account, depositId);
+        depositId++;
     }
 
     function getMessageHash(
@@ -121,7 +126,7 @@ contract Bridge is OwnableUpgradeable {
         bytes[] memory signatures
     ) external {
         require(signatures.length >= (totalValidators / 2) + 1, "more than half of validators need to sign");
-        require(nonce >= nextNonce[account], "invalid nonce");
+        require(isNonceProcessed[account][nonce] == false, "invalid nonce");
 
         uint totalSigned; 
 
@@ -137,7 +142,7 @@ contract Bridge is OwnableUpgradeable {
         }
 
         require(totalSigned >= (totalValidators / 2) + 1, "insufficient validators signed");
-        nextNonce[account] = nonce + 1;
+       isNonceProcessed[account][nonce] = true;
 
         if (txnType == TransactionType.ADD_VALIDATOR) {
             totalValidators++;
