@@ -26,6 +26,17 @@ const config: HardhatUserConfig = {
           apiKey: process.env.API_KEY || ""
         }
       }
+    },
+    mainnet: {
+      accounts: [process.env.PRIVATE_KEY || ""],
+      chainId: 1,
+      url: process.env.RPC_URL || "",
+      verify: {
+        etherscan: {
+          apiUrl: 'https://api.etherscan.io/',
+          apiKey: process.env.API_KEY || ""
+        }
+      }
     }
   }
 };
