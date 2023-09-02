@@ -8,7 +8,7 @@ module.exports = async ({getNamedAccounts, deployments} : HardhatRuntimeEnvironm
 
     const usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
     const epic = "0xF77B59a2Fd8eA0dED3eE72A2942C298De8A3e802";
-    const genesis = "0x27c57964773fcA6D4fca8A5D77C7861D9dbbfEa4";
+    const genesis = "0x20B3773Dba6986bC180fd89766adBA97850165d9";
 
     await deploy("Bridge", {
       contract: "Bridge",
