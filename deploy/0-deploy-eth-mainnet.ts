@@ -16,7 +16,8 @@ module.exports = async ({getNamedAccounts, deployments} : HardhatRuntimeEnvironm
       log: true,
       deterministicDeployment: false,
       proxy: {
-        proxyContract: "OptimizedTransparentProxy",
+        owner: genesis,
+        proxyContract: "OpenZeppelinTransparentProxy",
         execute: {
           methodName: "initialize",
           args: [
