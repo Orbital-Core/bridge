@@ -36,7 +36,7 @@ const config: HardhatUserConfig = {
           apiUrl: 'https://api.etherscan.io/',
           apiKey: process.env.API_KEY || ""
         }
-      }
+      },
     }
   }
 };
